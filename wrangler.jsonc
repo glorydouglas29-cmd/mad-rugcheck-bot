@@ -6,7 +6,7 @@
   "kv_namespaces": [
     {
       "binding": "RUGCHECK_KV",
-      "id": "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+      "id": "b5f61686671545ee822a1eb7220114ef"
     }
   ],
   "observability": {
