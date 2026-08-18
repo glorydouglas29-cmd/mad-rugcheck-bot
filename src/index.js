@@ -2,6 +2,7 @@ import { getMintInfo, getTopHolders, getTokenMetadata } from "./helius.js";
 import { scoreToken } from "./risk-engine.js";
 import { getCachedScan, setCachedScan } from "./kv-cache.js";
 import { sendMessage, formatRiskCard } from "./telegram.js";
+import { getMarketData } from "./dexscreener.js";
 
 // Base58 Solana address, 32-44 chars
 const CA_REGEX = /[1-9A-HJ-NP-Za-km-z]{32,44}/;
@@ -78,7 +79,18 @@ export default {
         await setCachedScan(env.RUGCHECK_KV, mintAddress, scanResult);
       }
 
-      await sendMessage(env.TELEGRAM_BOT_TOKEN, chatId, formatRiskCard(scanResult));
+      // Market data is fetched fresh every time (not cached alongside the risk
+      // score) since price/liquidity/volume move constantly, unlike authority
+      // and holder-concentration checks. A failure here shouldn't kill the scan
+      // — the risk card still has value without it.
+      let marketData = null;
+      try {
+        marketData = await getMarketData(mintAddress);
+      } catch (err) {
+        console.error("DexScreener error:", err.message);
+      }
+
+      await sendMessage(env.TELEGRAM_BOT_TOKEN, chatId, formatRiskCard(scanResult, marketData));
     } catch (err) {
       console.error("Scan error:", err.message);
       await sendMessage(
