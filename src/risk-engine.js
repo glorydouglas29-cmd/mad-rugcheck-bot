@@ -50,7 +50,13 @@ function scoreHolderConcentration(topHolders, totalSupply) {
   }
 
   const supply = BigInt(totalSupply);
-  const sorted = [...topHolders].sort((a, b) => BigInt(b.amount) - BigInt(a.amount));
+  // NOTE: sort comparator must return a Number, not a BigInt — returning
+  // `BigInt(b.amount) - BigInt(a.amount)` throws "Cannot convert a BigInt
+  // value to a number" inside V8's sort implementation.
+  const sorted = [...topHolders].sort((a, b) => {
+    const diff = BigInt(b.amount) - BigInt(a.amount);
+    return diff > 0n ? 1 : diff < 0n ? -1 : 0;
+  });
 
   const largestHolderPct = supply > 0n
     ? Number((BigInt(sorted[0].amount) * 10000n) / supply) / 100
